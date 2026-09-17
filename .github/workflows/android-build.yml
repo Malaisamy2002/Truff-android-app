@@ -1,0 +1,106 @@
+name: Build Android APK
+
+# Referenced from ANDROID_BUILD.md — builds the APK on GitHub's runners so
+# nobody needs the Android SDK/NDK/Rust toolchain installed locally.
+#
+# Builds split (per-ABI) APKs — one APK per architecture (arm64-v8a,
+# armeabi-v7a, x86, x86_64) instead of a single universal APK that bundles
+# all four. Each split APK is smaller and is what most people want for
+# sideloading onto one real device; only build the universal one instead if
+# you need a single file that installs on any device/emulator regardless of
+# architecture (drop --split-per-abi below to go back to that).
+#
+# Unsigned by default. Set the four ANDROID_* secrets described in
+# ANDROID_BUILD.md ("Signing the build") to get signed APKs instead.
+#
+# Status: real, ready-to-use YAML — but genuinely unrun. This was written
+# and reviewed against Tauri's documented Android CI recipe, not verified
+# against an actual GitHub Actions run (this sandbox has no Rust toolchain,
+# Android SDK/NDK, or a real repo to push to).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "src-tauri/**"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup NDK
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          local-cache: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Decode signing keystore (if configured)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/release-key.jks
+
+      - name: Init Android project
+        run: npx tauri android init
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+
+      - name: Build split APKs
+        run: npx tauri android build --apk --split-per-abi
+        env:
+          NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          # Empty when the secrets above aren't set — Tauri then produces
+          # an unsigned APK, same as running the build locally with no
+          # signing env vars.
+          ANDROID_SIGNING_STORE_FILE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && '/tmp/release-key.jks' || '' }}
+          ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload split APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: truff-snacks-android-apks
+          # --split-per-abi changes the output layout from
+          # outputs/apk/universal/release/*.apk to one *.apk per ABI under
+          # outputs/apk/<abi>/release/ (e.g. arm64/, armeabi-v7a/, x86/,
+          # x86_64/). The ** glob already walks into any subdirectory, so it
+          # picks up all four without needing to list them individually.
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
