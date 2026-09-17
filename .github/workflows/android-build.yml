@@ -59,9 +59,10 @@ jobs:
       # Fresh runners have not accepted the SDK licenses; installing the
       # NDK or letting Gradle pull build-tools/platforms without this first
       # fails with "some licences have not been accepted".
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses > /dev/null || true
-
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+               packages: platform-tools
       # NDK version: pin this to whatever `tauri android init` reports it
       # needs the first time this workflow actually runs (check the job
       # log) — 27.x is current at the time of writing, but Tauri's minimum
