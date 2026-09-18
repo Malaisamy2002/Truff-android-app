@@ -75,7 +75,7 @@ export function ArrangeToolbar() {
   useEffect(() => {
     if (!on) return;
     const prev = document.body.style.paddingBottom;
-    document.body.style.paddingBottom = "13rem";
+    document.body.style.paddingBottom = "16rem";
     return () => {
       document.body.style.paddingBottom = prev;
     };
@@ -125,7 +125,17 @@ export function ArrangeToolbar() {
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      {/*
+       * Sits just above the app's own bottom tab bar (fixed, inset-x-0,
+       * bottom-0, z-20, min-h-16, hidden on md+) instead of on top of it.
+       * This bar used to share the exact same bottom-0 footprint at a
+       * higher z-index, which visually and functionally swallowed the real
+       * tab bar underneath — arrange mode made it impossible to switch
+       * tabs at all. Leaving a bottom-16 gap (the tab bar's own height)
+       * keeps the tab bar visible and tappable while this bar is open;
+       * bottom-0 on md+ is safe since the tab bar is hidden there.
+       */}
+      <div className="fixed inset-x-0 bottom-16 z-50 border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:bottom-0 md:pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-3xl space-y-2 px-3 py-2">
           {/* Row 1 — finish + the two live switches */}
           <div className="flex flex-wrap items-center gap-2">

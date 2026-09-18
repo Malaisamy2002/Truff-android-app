@@ -107,7 +107,15 @@ class AndroidSavePlugin(private val activity: Activity) : Plugin(activity) {
                 resolver.update(uri, values, null, null)
                 uriString = uri.toString()
 
-                if (args.openAfterSave) openUri(uri.toString(), args.mimeType, false)
+                // grantPermission = true: this is a content:// MediaStore URI
+                // owned by our own package, and most PDF viewers on API 29+
+                // don't hold broad storage permissions of their own — without
+                // FLAG_GRANT_READ_URI_PERMISSION here, ACTION_VIEW resolves to
+                // an app that then fails (often silently) to read the file, so
+                // "Preview" looked like it did nothing even though the save
+                // itself succeeded. The legacy branch below already grants
+                // permission via FileProvider for the same reason.
+                if (args.openAfterSave) openUri(uri.toString(), args.mimeType, true)
             } else {
                 val dir = Environment.getExternalStoragePublicDirectory(
                     Environment.DIRECTORY_DOWNLOADS

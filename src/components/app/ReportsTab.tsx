@@ -1624,36 +1624,48 @@ export function ReportsTab() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[34rem] text-sm">
                     <thead>
                       <tr className="text-left text-muted-foreground">
-                        <th className="py-2">Month</th>
-                        <th className="py-2 text-right">Revenue (incl. tax)</th>
-                        <th className="py-2 text-right">Expenses</th>
-                        <th className="py-2 text-right">Profit</th>
-                        <th className="py-2 text-right">Dues</th>
+                        <th className="py-2 pr-3">Month</th>
+                        <th className="whitespace-nowrap py-2 pl-3 text-right">
+                          Revenue (incl. tax)
+                        </th>
+                        <th className="whitespace-nowrap py-2 pl-3 text-right">
+                          Expenses
+                        </th>
+                        <th className="whitespace-nowrap py-2 pl-3 text-right">
+                          Profit
+                        </th>
+                        <th className="whitespace-nowrap py-2 pl-3 text-right">
+                          Dues
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {pnl.map((r) => (
                         <tr key={r.key} className="border-t">
-                          <td className="py-2">{r.month}</td>
-                          <td className="py-2 text-right">
+                          <td className="whitespace-nowrap py-2 pr-3">
+                            {r.month}
+                          </td>
+                          <td className="whitespace-nowrap py-2 pl-3 text-right">
                             {money(r.Revenue)}
                           </td>
-                          <td className="py-2 text-right">
+                          <td className="whitespace-nowrap py-2 pl-3 text-right">
                             {money(r.Expenses)}
                           </td>
                           <td
                             className={
                               r.Profit < 0
-                                ? "py-2 text-right font-semibold text-destructive"
-                                : "py-2 text-right font-semibold"
+                                ? "whitespace-nowrap py-2 pl-3 text-right font-semibold text-destructive"
+                                : "whitespace-nowrap py-2 pl-3 text-right font-semibold"
                             }
                           >
                             {money(r.Profit)}
                           </td>
-                          <td className="py-2 text-right">{money(r.Dues)}</td>
+                          <td className="whitespace-nowrap py-2 pl-3 text-right">
+                            {money(r.Dues)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

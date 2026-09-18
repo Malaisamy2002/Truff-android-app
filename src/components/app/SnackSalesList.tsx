@@ -248,8 +248,8 @@ export function SnackSalesList() {
                         moved && "opacity-60 saturate-50",
                       )}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
                           <p className="flex flex-wrap items-center gap-2 font-semibold">
                             <span>
                               {s.bill_no}
@@ -297,7 +297,7 @@ export function SnackSalesList() {
                             </p>
                           )}
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap justify-end gap-1">
                           <RecordActionRow
                             doc={snackSaleReceipt(s)}
                             phone={customerPhoneForName(

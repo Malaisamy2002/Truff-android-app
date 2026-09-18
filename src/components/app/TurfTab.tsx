@@ -1212,8 +1212,8 @@ export function TurfTab({
                             moved && "opacity-60 saturate-50",
                           )}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
                               <p className="flex flex-wrap items-center gap-2 font-semibold">
                                 <span>
                                   {b.booking_no} · {b.customer_name}
@@ -1336,7 +1336,7 @@ export function TurfTab({
                                   Merged into bill
                                 </span>
                               )}
-                              <div className="flex gap-1">
+                              <div className="flex flex-wrap justify-end gap-1">
                                 <RecordActionRow
                                   doc={bookingReceipt(b)}
                                   phone={b.phone}
