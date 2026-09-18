@@ -94,19 +94,21 @@ without network access, so nothing native could be scaffolded or built).
   or writing a small custom Kotlin plugin if they don't — that's native
   Android code this environment can't write blind without the actual plugin
   API surface in front of it.
-- **GitHub token storage on Android** (§4) — the Android Keystore /
+- ~~**GitHub token storage on Android** (§4) — the Android Keystore /
   `EncryptedSharedPreferences`-backed `keyring_get_token` /
   `keyring_set_token` / `keyring_delete_token` implementation is not
-  written. Also still unresolved from the original audit: confirm whether
-  those three commands are even registered for the *desktop* build today —
-  `src-tauri/src/lib.rs` in this snapshot only registers `opener`, `fs`, and
-  `dialog` plugins, no keyring plugin or custom command handlers. If
-  desktop doesn't actually have this working yet either, that's a
-  pre-existing gap, not something introduced by the Android work.
-- **Fluid GitHub transfer** (§4) — `src/lib/github.ts`'s `toBase64`/
+  written.~~ **Superseded — see "GitHub backup removed" further down this
+  doc.** `src/lib/github.ts` and the GitHub-backup feature it belonged to
+  have since been deleted entirely, so this is no longer an open task on
+  either platform. Left struck through rather than deleted so the "Decision
+  recorded" section below (which also references this) still makes sense
+  as a historical record.
+- ~~**Fluid GitHub transfer** (§4) — `src/lib/github.ts`'s `toBase64`/
   `fromBase64` still encode/decode the whole backup payload synchronously.
   Not changed in this pass since it's a behavior/perf change best validated
-  with a real large dataset and on-device profiling, not guessed at blind.
+  with a real large dataset and on-device profiling, not guessed at
+  blind.~~ **Superseded — moot:** `github.ts` no longer exists (see
+  "GitHub backup removed" below).
 - **Back-button handling, touch-target audit, icons/splash** (§6), and the
   **Tauri Android project + Gradle/signing setup** (§8) are all still open —
   every one of them needs either the generated `gen/android/` project, a
@@ -175,7 +177,7 @@ Two items from this doc came up again during a data-integrity/GitHub-sync
 review pass; recording the decision here so it isn't re-litigated blind
 next time:
 
-- **GitHub token storage on Android.** Still not written — same reasoning
+- ~~**GitHub token storage on Android.** Still not written — same reasoning
   as above (needs `gen/android/` and a device to write real
   Keystore/`EncryptedSharedPreferences` code against, not guessed at). The
   interim is accepted as-is for now: `github.ts`'s `WEB_TOKEN_KEY`
@@ -184,7 +186,12 @@ next time:
   writes and tests the Keystore-backed plugin. `github.test.ts` now has a
   regression test asserting `readGithubConfig`/`writeGithubConfig` never
   call the `keyring_*` Tauri commands when `isAndroid()` is true, so this
-  interim can't silently regress into a crash while it's in effect.
+  interim can't silently regress into a crash while it's in effect.~~
+  **Superseded:** `github.ts` and `github.test.ts` no longer exist —
+  GitHub backup was removed from the app entirely (see "GitHub backup
+  removed" below), so there's no `WEB_TOKEN_KEY` fallback left to reason
+  about. Kept here struck through, not deleted, since this was a genuine
+  decision made at the time; don't read it as describing current behavior.
 - **SAF picker for `pickReceiptsArchiveFile()` / backup import.** Still not
   implemented, same reasoning. The interim is also accepted as-is:
   `ReceiptsCard.tsx` and `BackupCard.tsx` already route Android through the

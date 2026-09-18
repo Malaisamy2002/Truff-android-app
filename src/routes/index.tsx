@@ -37,7 +37,7 @@ import { useLayoutPrefs, visibleTabIds } from "@/lib/layout-prefs";
 import { backupReminderDue, readAppSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { isAndroid } from "@/lib/desktop";
-import { useArrangeMode } from "@/lib/arrange-mode";
+import { useArrangeMode } from "@/lib/arrange-mode-context";
 
 const TITLE = "Turf Bookings & Sales — Booking, Billing & Reports";
 const DESC =

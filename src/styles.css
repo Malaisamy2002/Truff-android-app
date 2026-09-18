@@ -171,6 +171,15 @@
     font-family: var(--font-sans);
     min-height: 100%;
     background: var(--color-background);
+    /* Android's Chromium WebView runs a "font boosting" text autosizer that
+     * inflates font sizes inside narrow columns/cards independently of the
+     * CSS you actually wrote — it's Android-only (WebView2 on Windows has no
+     * such algorithm), which is exactly why the same layout can look fine on
+     * Windows but have inconsistent, oversized type and knock-on spacing/
+     * wrapping issues on Android. Pinning this to 100% makes every element
+     * render at its authored font-size on both platforms. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {

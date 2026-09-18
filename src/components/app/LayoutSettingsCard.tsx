@@ -1,7 +1,7 @@
 import { SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useArrangeMode } from "@/lib/arrange-mode";
+import { useArrangeMode } from "@/lib/arrange-mode-context";
 import {
   orderedSections,
   usePresets,

@@ -58,7 +58,7 @@ import {
   parseMinutes,
   DAY_PARTS,
   type DayPartId,
-} from "./TimeSlotPicker";
+} from "@/lib/time-slot-utils";
 import { TurfCalendarCard } from "./TurfCalendarCard";
 import { BookingWizard, type BookingFormState } from "./BookingWizard";
 import { ConfirmDeleteButton } from "./ConfirmDeleteButton";
@@ -1367,6 +1367,7 @@ export function TurfTab({
                                   onConfirm={() =>
                                     del.mutate(b.id, {
                                       onSuccess: () => toast.success("Deleted"),
+                                      onError: (e) => toast.error(e.message),
                                     })
                                   }
                                 />

@@ -6,6 +6,7 @@ import { downloadBillPdf, printBillPdf, shareBillPdf } from "@/lib/receipt";
 import { INVOICE_SECTIONS, type InvoiceSection } from "@/lib/desktop";
 import { usePrintSettings } from "@/lib/print";
 import { upiUri } from "@/lib/receipt-upi";
+import { describeError } from "@/lib/error-capture";
 
 export function BillActions({
   bill,
@@ -48,7 +49,20 @@ export function BillActions({
       <Button
         variant="outline"
         className="lift min-h-12"
-        onClick={() => downloadBillPdf(bill, section)}
+        onClick={async () => {
+          // downloadBillPdf() shows its own toast on every path it can
+          // reach; this catch only guards the same class of pre-toast
+          // failure (a bad doc throwing inside PDF generation) that
+          // RecordActionRow's Download button guards against — otherwise
+          // the tap just looks like it did nothing.
+          try {
+            await downloadBillPdf(bill, section);
+          } catch (e) {
+            toast.error("Couldn't download PDF", {
+              description: describeError(e),
+            });
+          }
+        }}
       >
         <Download className="size-4" /> PDF
       </Button>
@@ -57,7 +71,13 @@ export function BillActions({
         className="lift min-h-12"
         aria-label="Print bill"
         title="Print"
-        onClick={() => printBillPdf(bill, section)}
+        onClick={async () => {
+          try {
+            await printBillPdf(bill, section);
+          } catch (e) {
+            toast.error("Couldn't print", { description: describeError(e) });
+          }
+        }}
       >
         <Printer className="size-4" /> Print
       </Button>
@@ -67,16 +87,20 @@ export function BillActions({
         title="Share on WhatsApp"
         disabled={restricted}
         onClick={async () => {
-          const res = await shareBillPdf(
-            bill,
-            whatsappUrl(billText(bill), bill.customer_phone),
-            section,
-          );
-          if (res === "fallback")
-            toast.info("PDF downloaded — attach it in WhatsApp");
-          // "cancelled" (Web Share dismissed, or an Android save failure —
-          // which already showed its own error toast) intentionally shows
-          // nothing further here.
+          try {
+            const res = await shareBillPdf(
+              bill,
+              whatsappUrl(billText(bill), bill.customer_phone),
+              section,
+            );
+            if (res === "fallback")
+              toast.info("PDF downloaded — attach it in WhatsApp");
+            // "cancelled" (Web Share dismissed, or an Android save failure —
+            // which already showed its own error toast) intentionally shows
+            // nothing further here.
+          } catch (e) {
+            toast.error("Couldn't share", { description: describeError(e) });
+          }
         }}
       >
         <Share2 className="size-4" /> WhatsApp
