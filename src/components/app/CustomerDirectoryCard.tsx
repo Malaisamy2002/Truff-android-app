@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Trash2, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
 import { customerTag, money } from "@/lib/biz";
 import { isFinancialBooking } from "@/lib/analytics";
 import { customerOutstanding, isFinancialSale } from "@/lib/dues";
-import { matchesCustomer, useBills } from "@/lib/data";
+import { matchesCustomer, useBills, type CustomerRec } from "@/lib/data";
 import { useSnackSales, useTurfBookings } from "@/lib/ops";
 import {
   useCleanupDuplicateCustomers,
@@ -45,6 +45,83 @@ const CUSTOMER_SORT_OPTIONS: SortOption<CustomerSortField>[] = [
   { value: "name", label: "Name (A–Z)", defaultDir: "asc" },
   { value: "due", label: "Outstanding balance", defaultDir: "desc" },
 ];
+
+type CustomerRowProps = {
+  customer: CustomerRec;
+  visits: number;
+  due: number;
+  tabDue: number;
+  onOpen: (who: { name: string; phone: string | null }) => void;
+  onDelete: (target: { id: string; name: string }) => void;
+};
+
+/**
+ * One row of the directory. Memoized (and fed only primitives + stable
+ * setters) so typing in the search box or paging doesn't re-render every row
+ * on the page, only the ones whose own data changed.
+ */
+const CustomerRow = memo(function CustomerRow({
+  customer: c,
+  visits,
+  due,
+  tabDue,
+  onOpen,
+  onDelete,
+}: CustomerRowProps) {
+  const tag = customerTag(visits);
+  return (
+    <div className="frost-soft lift flex items-center justify-between gap-3 rounded-xl border p-3">
+      <button
+        type="button"
+        className="min-w-0 flex-1 text-left"
+        onClick={() =>
+          onOpen({
+            name: c.name,
+            phone: c.phone ?? null,
+          })
+        }
+      >
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium underline decoration-dotted underline-offset-2">
+            {c.name}
+          </p>
+          <Badge
+            variant={
+              tag === "VIP"
+                ? "default"
+                : tag === "Regular"
+                  ? "secondary"
+                  : "outline"
+            }
+            className="shrink-0 text-[10px]"
+          >
+            {tag}
+          </Badge>
+          {tabDue > 0 && (
+            <Badge variant="destructive" className="shrink-0 text-[10px]">
+              On tab {money(tabDue)}
+            </Badge>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          {c.phone || "No phone"} · {visits} visit
+          {visits === 1 ? "" : "s"}
+          {due > 0 && (
+            <span className="text-destructive"> · Due {money(due)}</span>
+          )}
+        </p>
+      </button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => onDelete({ id: c.id, name: c.name })}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+});
 
 export function CustomerDirectoryCard() {
   const { data: customers = [] } = useCustomers();
@@ -301,76 +378,17 @@ export function CustomerDirectoryCard() {
                   {customers.length ? "No matches." : "No saved customers yet."}
                 </p>
               ) : (
-                displayedCustomers.map((c) => {
-                  const visits = visitsById.get(c.id) ?? 0;
-                  const due = dueById.get(c.id) ?? 0;
-                  const tabDue = tabDueById.get(c.id) ?? 0;
-
-                  const tag = customerTag(visits);
-                  return (
-                    <div
-                      key={c.id}
-                      className="frost-soft lift flex items-center justify-between gap-3 rounded-xl border p-3"
-                    >
-                      <button
-                        type="button"
-                        className="min-w-0 flex-1 text-left"
-                        onClick={() =>
-                          setOpenCustomer({
-                            name: c.name,
-                            phone: c.phone ?? null,
-                          })
-                        }
-                      >
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium underline decoration-dotted underline-offset-2">
-                            {c.name}
-                          </p>
-                          <Badge
-                            variant={
-                              tag === "VIP"
-                                ? "default"
-                                : tag === "Regular"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                            className="shrink-0 text-[10px]"
-                          >
-                            {tag}
-                          </Badge>
-                          {tabDue > 0 && (
-                            <Badge
-                              variant="destructive"
-                              className="shrink-0 text-[10px]"
-                            >
-                              On tab {money(tabDue)}
-                            </Badge>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-muted-foreground">
-                          {c.phone || "No phone"} · {visits} visit
-                          {visits === 1 ? "" : "s"}
-                          {due > 0 && (
-                            <span className="text-destructive">
-                              {" "}
-                              · Due {money(due)}
-                            </span>
-                          )}
-                        </p>
-                      </button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setConfirmDelete({ id: c.id, name: c.name })
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
-                })
+                displayedCustomers.map((c) => (
+                  <CustomerRow
+                    key={c.id}
+                    customer={c}
+                    visits={visitsById.get(c.id) ?? 0}
+                    due={dueById.get(c.id) ?? 0}
+                    tabDue={tabDueById.get(c.id) ?? 0}
+                    onOpen={setOpenCustomer}
+                    onDelete={setConfirmDelete}
+                  />
+                ))
               )}
             </div>
             {filtered.length > CUSTOMER_PAGE_SIZE && (

@@ -144,7 +144,10 @@ export function CustomerDetailDialog({ name, phone, onOpenChange }: Props) {
     ? (tabSummaries.get(tabKey(name, phone))?.balance ?? 0)
     : 0;
   const myEntries = useMemo(
-    () => (name ? tabEntries.filter((e) => e.customer_key === tabKey(name, phone)) : []),
+    () =>
+      name
+        ? tabEntries.filter((e) => e.customer_key === tabKey(name, phone))
+        : [],
     [name, phone, tabEntries],
   );
   const updateBooking = useUpdateTurfBooking();

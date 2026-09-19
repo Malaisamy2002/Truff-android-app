@@ -260,11 +260,15 @@
   text-transform: uppercase;
 }
 
-/* Softer frosted surface for inner rows / chips. */
+/* Softer frosted surface for inner rows / chips. No backdrop-filter here on
+   purpose: this utility is applied per-row inside scrolling lists
+   (OutstandingTab, ExpensesTab, CustomerDirectoryCard, BillsTab,
+   SnackSalesList), and a blurred+composited GPU layer per row is one of the
+   most expensive things you can ask Android's WebView to do during scroll —
+   it was costing ~25-50 fresh backdrop bitmaps a frame. The higher solid
+   mix below approximates the frosted look without the blur pass. */
 @utility frost-soft {
-  background: color-mix(in oklab, var(--card) 45%, transparent);
-  backdrop-filter: blur(10px) saturate(1.15);
-  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  background: color-mix(in oklab, var(--card) 72%, transparent);
   border-color: color-mix(in oklab, var(--border) 60%, transparent);
 }
 
@@ -370,8 +374,13 @@
  * forms and lists feel unnecessarily tall on a phone.
  */
 @media (max-width: 767px) {
-  .frost,
-  .frost-soft {
+  /* .frost-soft removed from this override: it no longer carries a
+     backdrop-filter at all (see the utility definition above), so
+     re-applying one here at "only" 9px would silently undo that fix on
+     every phone-width viewport — which is every Android device this
+     override exists for. .frost is a once-per-screen chrome surface
+     (headers, sheets), not a per-row one, so it keeps a reduced blur. */
+  .frost {
     backdrop-filter: blur(9px) saturate(1.08);
     -webkit-backdrop-filter: blur(9px) saturate(1.08);
   }

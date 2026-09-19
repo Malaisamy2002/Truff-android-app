@@ -1,6 +1,13 @@
-import { useMemo, useState } from "react";
-import { HandCoins, Receipt, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  HandCoins,
+  Receipt,
+  Search,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ListDisclosure } from "./ListDisclosure";
@@ -151,6 +158,26 @@ export function OutstandingTab() {
     });
   }, [rows, q, sort.field, sort.dir]);
 
+  const OUTSTANDING_PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filtered.length / OUTSTANDING_PAGE_SIZE),
+  );
+  const safePage = Math.min(page, pageCount);
+  const pageRows = useMemo(
+    () =>
+      filtered.slice(
+        (safePage - 1) * OUTSTANDING_PAGE_SIZE,
+        safePage * OUTSTANDING_PAGE_SIZE,
+      ),
+    [filtered, safePage],
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [q, sort.field, sort.dir, rows.length]);
+
   const totalOwed = sumRupees(rows.map((r) => r.total));
 
   return (
@@ -247,7 +274,7 @@ export function OutstandingTab() {
                             : "Nothing outstanding — everyone's settled up."}
                         </p>
                       ) : (
-                        filtered.map((r) => (
+                        pageRows.map((r) => (
                           <button
                             key={r.key}
                             type="button"
@@ -277,6 +304,30 @@ export function OutstandingTab() {
                       )}
                     </CardContent>
                   </Card>
+                  {filtered.length > OUTSTANDING_PAGE_SIZE && (
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        className="h-12"
+                        disabled={safePage <= 1}
+                        onClick={() => setPage(safePage - 1)}
+                      >
+                        <ChevronLeft className="size-4" /> Prev
+                      </Button>
+                      <p className="text-sm text-muted-foreground">
+                        Page {safePage} of {pageCount} · {filtered.length}{" "}
+                        outstanding
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="h-12"
+                        disabled={safePage >= pageCount}
+                        onClick={() => setPage(safePage + 1)}
+                      >
+                        Next <ChevronRight className="size-4" />
+                      </Button>
+                    </div>
+                  )}
                 </ListDisclosure>
               </LayoutPart>
             </LayoutParts>
